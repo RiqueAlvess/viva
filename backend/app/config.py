@@ -1,0 +1,4 @@
+# Re-export settings from core.config for convenience
+from app.core.config import settings
+
+__all__ = ["settings"]
