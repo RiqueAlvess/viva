@@ -8,6 +8,17 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str
 
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def ensure_async_driver(cls, v: str) -> str:
+        if v.startswith("postgres://"):
+            v = v.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif v.startswith("postgresql://"):
+            v = v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        elif v.startswith("postgresql+psycopg2://"):
+            v = v.replace("postgresql+psycopg2://", "postgresql+asyncpg://", 1)
+        return v
+
     # Redis & Celery
     REDIS_URL: str = "redis://localhost:6379/0"
 
