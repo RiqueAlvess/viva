@@ -8,7 +8,7 @@ from sqlalchemy import select, and_
 from app.database import get_db
 from app.core.permissions import require_rh_or_adm, get_current_user
 from app.core.security import generate_magic_link_token, encrypt_email, decrypt_email
-from app.models.campaign import Campaign, Collaborator as CampaignCollab, Sector, Unit
+from app.models.campaign import Campaign, Sector, Unit
 from app.models.survey import (
     SurveyInvitation, Collaborator, InvitationEmail
 )
@@ -16,7 +16,6 @@ from app.schemas.survey import (
     InvitationListItem, SendInvitationsRequest,
     InvitationStatsResponse,
 )
-from app.schemas.campaign import InvitationStatsResponse as CampaignInvStats
 from app.workers.tasks.email_tasks import send_invitation_email_task
 
 router = APIRouter()
