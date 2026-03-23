@@ -36,13 +36,17 @@ class BaseAnalytics(DeclarativeBase):
 
 _is_local = "localhost" in settings.DATABASE_URL or "127.0.0.1" in settings.DATABASE_URL
 
+_connect_args: dict = {"statement_cache_size": 0}
+if not _is_local:
+    _connect_args["ssl"] = "require"
+
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.ENVIRONMENT == "development",
     pool_pre_ping=True,
     pool_size=10,
     max_overflow=20,
-    connect_args={} if _is_local else {"ssl": "require"},
+    connect_args=_connect_args,
 )
 
 AsyncSessionLocal = async_sessionmaker(
