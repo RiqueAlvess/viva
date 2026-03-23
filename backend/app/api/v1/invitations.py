@@ -14,8 +14,8 @@ from app.models.survey import (
 )
 from app.schemas.survey import (
     InvitationListItem, SendInvitationsRequest,
-    InvitationStatsResponse,
 )
+from app.schemas.campaign import InvitationStatsResponse
 from app.workers.tasks.email_tasks import send_invitation_email_task
 
 router = APIRouter()
