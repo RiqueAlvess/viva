@@ -34,12 +34,15 @@ class BaseAnalytics(DeclarativeBase):
     metadata = metadata_analytics
 
 
+_is_local = "localhost" in settings.DATABASE_URL or "127.0.0.1" in settings.DATABASE_URL
+
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.ENVIRONMENT == "development",
     pool_pre_ping=True,
     pool_size=10,
     max_overflow=20,
+    connect_args={} if _is_local else {"ssl": "require"},
 )
 
 AsyncSessionLocal = async_sessionmaker(
