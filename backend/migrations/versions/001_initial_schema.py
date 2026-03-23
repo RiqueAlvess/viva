@@ -53,7 +53,7 @@ def upgrade() -> None:
         sa.Column("nome", sa.String(255), nullable=False),
         sa.Column("email", sa.String(255), unique=True, nullable=False),
         sa.Column("hashed_password", sa.String(255), nullable=False),
-        sa.Column("role", sa.Enum("ADM", "RH", "LIDERANCA", name="user_role", schema="core"), nullable=False),
+        sa.Column("role", sa.Enum("ADM", "RH", "LIDERANCA", name="user_role", schema="core", create_type=False), nullable=False),
         sa.Column("ativo", sa.Boolean, server_default="true", nullable=False),
         sa.Column("sector_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
@@ -83,7 +83,7 @@ def upgrade() -> None:
         sa.Column("descricao", sa.Text, nullable=True),
         sa.Column("data_inicio", sa.DateTime(timezone=True), nullable=False),
         sa.Column("data_fim", sa.DateTime(timezone=True), nullable=False),
-        sa.Column("status", sa.Enum("draft", "active", "closed", name="campaign_status", schema="survey"), server_default="draft", nullable=False),
+        sa.Column("status", sa.Enum("draft", "active", "closed", name="campaign_status", schema="survey", create_type=False), server_default="draft", nullable=False),
         sa.Column("salt", sa.String(64), nullable=False),
         sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
@@ -142,8 +142,8 @@ def upgrade() -> None:
         sa.Column("collaborator_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("survey.collaborators.id", ondelete="CASCADE"), nullable=False),
         sa.Column("token_public", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("token_hash", sa.String(64), nullable=False),
-        sa.Column("status", sa.Enum("pending", "sent", "used", "expired", name="invitation_status", schema="survey"), server_default="pending", nullable=False),
-        sa.Column("display_status", sa.Enum("pending", "sent", "responded", "expired", name="invitation_display_status", schema="survey"), server_default="pending", nullable=False),
+        sa.Column("status", sa.Enum("pending", "sent", "used", "expired", name="invitation_status", schema="survey", create_type=False), server_default="pending", nullable=False),
+        sa.Column("display_status", sa.Enum("pending", "sent", "responded", "expired", name="invitation_display_status", schema="survey", create_type=False), server_default="pending", nullable=False),
         sa.Column("status_updated_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("display_status_updated_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
@@ -173,9 +173,9 @@ def upgrade() -> None:
         sa.Column("unit_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("survey.units.id", ondelete="SET NULL"), nullable=True),
         sa.Column("sector_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("survey.sectors.id", ondelete="SET NULL"), nullable=True),
         sa.Column("answers", postgresql.JSONB, nullable=False),
-        sa.Column("faixa_etaria", sa.Enum("18-24", "25-34", "35-44", "45-54", "55-64", "65+", name="faixa_etaria_enum", schema="survey"), nullable=True),
-        sa.Column("genero", sa.Enum("M", "F", "O", "N", name="genero_enum", schema="survey"), nullable=True),
-        sa.Column("tempo_empresa", sa.Enum("<1", "1-3", "3-5", "5-10", ">10", name="tempo_empresa_enum", schema="survey"), nullable=True),
+        sa.Column("faixa_etaria", sa.Enum("18-24", "25-34", "35-44", "45-54", "55-64", "65+", name="faixa_etaria_enum", schema="survey", create_type=False), nullable=True),
+        sa.Column("genero", sa.Enum("M", "F", "O", "N", name="genero_enum", schema="survey", create_type=False), nullable=True),
+        sa.Column("tempo_empresa", sa.Enum("<1", "1-3", "3-5", "5-10", ">10", name="tempo_empresa_enum", schema="survey", create_type=False), nullable=True),
         sa.Column("lgpd_consent", sa.Boolean, nullable=False),
         sa.Column("lgpd_consent_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("submitted_at", sa.DateTime(timezone=True), nullable=False),
@@ -248,6 +248,13 @@ def downgrade() -> None:
     op.drop_table("refresh_tokens", schema="core")
     op.drop_table("users", schema="core")
     op.drop_table("companies", schema="core")
+    op.execute("DROP TYPE IF EXISTS survey.tempo_empresa_enum")
+    op.execute("DROP TYPE IF EXISTS survey.genero_enum")
+    op.execute("DROP TYPE IF EXISTS survey.faixa_etaria_enum")
+    op.execute("DROP TYPE IF EXISTS survey.invitation_display_status")
+    op.execute("DROP TYPE IF EXISTS survey.invitation_status")
+    op.execute("DROP TYPE IF EXISTS survey.campaign_status")
+    op.execute("DROP TYPE IF EXISTS core.user_role")
     op.execute("DROP SCHEMA IF EXISTS analytics CASCADE")
     op.execute("DROP SCHEMA IF EXISTS survey CASCADE")
     op.execute("DROP SCHEMA IF EXISTS core CASCADE")
