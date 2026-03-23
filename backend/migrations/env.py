@@ -1,11 +1,15 @@
 import asyncio
+import os
 from logging.config import fileConfig
 
+from dotenv import load_dotenv
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
+
+load_dotenv()
 
 # Load models
 from app.database import BaseCore, BaseSurvey, BaseAnalytics
@@ -28,7 +32,6 @@ target_metadata = [
 ]
 
 # Override with env var if present
-import os
 db_url = os.environ.get("DATABASE_URL", config.get_main_option("sqlalchemy.url"))
 if db_url and not db_url.startswith("postgresql+asyncpg"):
     db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
