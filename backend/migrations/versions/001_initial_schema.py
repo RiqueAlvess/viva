@@ -17,22 +17,76 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+# Define ENUM types once — postgresql.ENUM with create_type=False
+# prevents SQLAlchemy from auto-creating them during op.create_table.
+# We create them explicitly via DO blocks (idempotent).
+enum_user_role = postgresql.ENUM(
+    "ADM", "RH", "LIDERANCA",
+    name="user_role", schema="core", create_type=False,
+)
+enum_campaign_status = postgresql.ENUM(
+    "draft", "active", "closed",
+    name="campaign_status", schema="survey", create_type=False,
+)
+enum_invitation_status = postgresql.ENUM(
+    "pending", "sent", "used", "expired",
+    name="invitation_status", schema="survey", create_type=False,
+)
+enum_invitation_display_status = postgresql.ENUM(
+    "pending", "sent", "responded", "expired",
+    name="invitation_display_status", schema="survey", create_type=False,
+)
+enum_faixa_etaria = postgresql.ENUM(
+    "18-24", "25-34", "35-44", "45-54", "55-64", "65+",
+    name="faixa_etaria_enum", schema="survey", create_type=False,
+)
+enum_genero = postgresql.ENUM(
+    "M", "F", "O", "N",
+    name="genero_enum", schema="survey", create_type=False,
+)
+enum_tempo_empresa = postgresql.ENUM(
+    "<1", "1-3", "3-5", "5-10", ">10",
+    name="tempo_empresa_enum", schema="survey", create_type=False,
+)
+
+
+def _create_enum_idempotent(sql: str) -> None:
+    """Wrap CREATE TYPE in a DO block so it doesn't fail if the type exists."""
+    op.execute(
+        f"DO $$ BEGIN {sql}; EXCEPTION WHEN duplicate_object THEN NULL; END $$"
+    )
+
+
 def upgrade() -> None:
-    # Create schemas
+    # --- Schemas ---
     op.execute("CREATE SCHEMA IF NOT EXISTS core")
     op.execute("CREATE SCHEMA IF NOT EXISTS survey")
     op.execute("CREATE SCHEMA IF NOT EXISTS analytics")
 
-    # Create enums
-    op.execute("CREATE TYPE core.user_role AS ENUM ('ADM', 'RH', 'LIDERANCA')")
-    op.execute("CREATE TYPE survey.campaign_status AS ENUM ('draft', 'active', 'closed')")
-    op.execute("CREATE TYPE survey.invitation_status AS ENUM ('pending', 'sent', 'used', 'expired')")
-    op.execute("CREATE TYPE survey.invitation_display_status AS ENUM ('pending', 'sent', 'responded', 'expired')")
-    op.execute("CREATE TYPE survey.faixa_etaria_enum AS ENUM ('18-24', '25-34', '35-44', '45-54', '55-64', '65+')")
-    op.execute("CREATE TYPE survey.genero_enum AS ENUM ('M', 'F', 'O', 'N')")
-    op.execute("CREATE TYPE survey.tempo_empresa_enum AS ENUM ('<1', '1-3', '3-5', '5-10', '>10')")
+    # --- Enum types (idempotent) ---
+    _create_enum_idempotent(
+        "CREATE TYPE core.user_role AS ENUM ('ADM', 'RH', 'LIDERANCA')"
+    )
+    _create_enum_idempotent(
+        "CREATE TYPE survey.campaign_status AS ENUM ('draft', 'active', 'closed')"
+    )
+    _create_enum_idempotent(
+        "CREATE TYPE survey.invitation_status AS ENUM ('pending', 'sent', 'used', 'expired')"
+    )
+    _create_enum_idempotent(
+        "CREATE TYPE survey.invitation_display_status AS ENUM ('pending', 'sent', 'responded', 'expired')"
+    )
+    _create_enum_idempotent(
+        "CREATE TYPE survey.faixa_etaria_enum AS ENUM ('18-24', '25-34', '35-44', '45-54', '55-64', '65+')"
+    )
+    _create_enum_idempotent(
+        "CREATE TYPE survey.genero_enum AS ENUM ('M', 'F', 'O', 'N')"
+    )
+    _create_enum_idempotent(
+        "CREATE TYPE survey.tempo_empresa_enum AS ENUM ('<1', '1-3', '3-5', '5-10', '>10')"
+    )
 
-    # core.companies
+    # --- core.companies ---
     op.create_table(
         "companies",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
@@ -45,7 +99,7 @@ def upgrade() -> None:
         schema="core",
     )
 
-    # core.users
+    # --- core.users ---
     op.create_table(
         "users",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
@@ -53,7 +107,7 @@ def upgrade() -> None:
         sa.Column("nome", sa.String(255), nullable=False),
         sa.Column("email", sa.String(255), unique=True, nullable=False),
         sa.Column("hashed_password", sa.String(255), nullable=False),
-        sa.Column("role", sa.Enum("ADM", "RH", "LIDERANCA", name="user_role", schema="core", create_type=False), nullable=False),
+        sa.Column("role", enum_user_role, nullable=False),
         sa.Column("ativo", sa.Boolean, server_default="true", nullable=False),
         sa.Column("sector_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
@@ -62,7 +116,7 @@ def upgrade() -> None:
     )
     op.create_index("ix_core_users_email", "users", ["email"], schema="core")
 
-    # core.refresh_tokens
+    # --- core.refresh_tokens ---
     op.create_table(
         "refresh_tokens",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
@@ -74,7 +128,7 @@ def upgrade() -> None:
         schema="core",
     )
 
-    # survey.campaigns
+    # --- survey.campaigns ---
     op.create_table(
         "campaigns",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
@@ -83,7 +137,7 @@ def upgrade() -> None:
         sa.Column("descricao", sa.Text, nullable=True),
         sa.Column("data_inicio", sa.DateTime(timezone=True), nullable=False),
         sa.Column("data_fim", sa.DateTime(timezone=True), nullable=False),
-        sa.Column("status", sa.Enum("draft", "active", "closed", name="campaign_status", schema="survey", create_type=False), server_default="draft", nullable=False),
+        sa.Column("status", enum_campaign_status, server_default="draft", nullable=False),
         sa.Column("salt", sa.String(64), nullable=False),
         sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
@@ -91,7 +145,7 @@ def upgrade() -> None:
         schema="survey",
     )
 
-    # survey.units
+    # --- survey.units ---
     op.create_table(
         "units",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
@@ -101,7 +155,7 @@ def upgrade() -> None:
         schema="survey",
     )
 
-    # survey.sectors
+    # --- survey.sectors ---
     op.create_table(
         "sectors",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
@@ -112,7 +166,7 @@ def upgrade() -> None:
         schema="survey",
     )
 
-    # survey.positions
+    # --- survey.positions ---
     op.create_table(
         "positions",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
@@ -123,7 +177,7 @@ def upgrade() -> None:
         schema="survey",
     )
 
-    # survey.collaborators
+    # --- survey.collaborators ---
     op.create_table(
         "collaborators",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
@@ -134,7 +188,7 @@ def upgrade() -> None:
         schema="survey",
     )
 
-    # survey.survey_invitations
+    # --- survey.survey_invitations ---
     op.create_table(
         "survey_invitations",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
@@ -142,8 +196,8 @@ def upgrade() -> None:
         sa.Column("collaborator_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("survey.collaborators.id", ondelete="CASCADE"), nullable=False),
         sa.Column("token_public", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("token_hash", sa.String(64), nullable=False),
-        sa.Column("status", sa.Enum("pending", "sent", "used", "expired", name="invitation_status", schema="survey", create_type=False), server_default="pending", nullable=False),
-        sa.Column("display_status", sa.Enum("pending", "sent", "responded", "expired", name="invitation_display_status", schema="survey", create_type=False), server_default="pending", nullable=False),
+        sa.Column("status", enum_invitation_status, server_default="pending", nullable=False),
+        sa.Column("display_status", enum_invitation_display_status, server_default="pending", nullable=False),
         sa.Column("status_updated_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("display_status_updated_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
@@ -153,7 +207,7 @@ def upgrade() -> None:
     )
     op.create_index("ix_survey_invitations_token_hash", "survey_invitations", ["token_hash"], schema="survey")
 
-    # survey.invitation_emails
+    # --- survey.invitation_emails ---
     op.create_table(
         "invitation_emails",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
@@ -164,7 +218,7 @@ def upgrade() -> None:
         schema="survey",
     )
 
-    # survey.survey_responses
+    # --- survey.survey_responses ---
     op.create_table(
         "survey_responses",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
@@ -173,9 +227,9 @@ def upgrade() -> None:
         sa.Column("unit_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("survey.units.id", ondelete="SET NULL"), nullable=True),
         sa.Column("sector_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("survey.sectors.id", ondelete="SET NULL"), nullable=True),
         sa.Column("answers", postgresql.JSONB, nullable=False),
-        sa.Column("faixa_etaria", sa.Enum("18-24", "25-34", "35-44", "45-54", "55-64", "65+", name="faixa_etaria_enum", schema="survey", create_type=False), nullable=True),
-        sa.Column("genero", sa.Enum("M", "F", "O", "N", name="genero_enum", schema="survey", create_type=False), nullable=True),
-        sa.Column("tempo_empresa", sa.Enum("<1", "1-3", "3-5", "5-10", ">10", name="tempo_empresa_enum", schema="survey", create_type=False), nullable=True),
+        sa.Column("faixa_etaria", enum_faixa_etaria, nullable=True),
+        sa.Column("genero", enum_genero, nullable=True),
+        sa.Column("tempo_empresa", enum_tempo_empresa, nullable=True),
         sa.Column("lgpd_consent", sa.Boolean, nullable=False),
         sa.Column("lgpd_consent_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("submitted_at", sa.DateTime(timezone=True), nullable=False),
@@ -184,7 +238,7 @@ def upgrade() -> None:
         schema="survey",
     )
 
-    # analytics.fact_dimension_scores
+    # --- analytics.fact_dimension_scores ---
     op.create_table(
         "fact_dimension_scores",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
@@ -202,7 +256,7 @@ def upgrade() -> None:
     op.create_index("ix_fact_dimension_scores_campaign_id", "fact_dimension_scores", ["campaign_id"], schema="analytics")
     op.create_index("ix_fact_dimension_scores_response_id", "fact_dimension_scores", ["response_id"], schema="analytics")
 
-    # analytics.fact_campaign_metrics
+    # --- analytics.fact_campaign_metrics ---
     op.create_table(
         "fact_campaign_metrics",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
@@ -216,7 +270,7 @@ def upgrade() -> None:
         schema="analytics",
     )
 
-    # analytics.fact_sector_scores
+    # --- analytics.fact_sector_scores ---
     op.create_table(
         "fact_sector_scores",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
