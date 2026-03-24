@@ -62,4 +62,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 async def init_db() -> None:
     """Ensure database tables exist."""
+    import app.models  # noqa: F401 - register all models with Base
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     logger.info("Database ready (public schema).")
