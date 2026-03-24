@@ -1,5 +1,5 @@
 from app.models.company import Company
-from app.models.user import User, RefreshToken
+from app.models.user import User
 from app.models.campaign import Campaign, Unit, Sector, Position
 from app.models.survey import (
     Collaborator,
@@ -16,8 +16,7 @@ from app.models.analytics import (
 __all__ = [
     "Company",
     "User",
-    "RefreshToken",
-    "Campaign",
+"Campaign",
     "Unit",
     "Sector",
     "Position",

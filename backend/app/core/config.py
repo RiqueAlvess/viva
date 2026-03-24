@@ -24,10 +24,8 @@ class Settings(BaseSettings):
 
     # JWT
     SECRET_KEY: str
-    REFRESH_SECRET_KEY: str
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 480
 
     # Resend
     RESEND_API_KEY: str = ""
@@ -45,10 +43,6 @@ class Settings(BaseSettings):
 
     # Environment
     ENVIRONMENT: str = "development"
-
-    # Rate limiting
-    RATE_LIMIT_LOGIN: str = "3/minute"
-    RATE_LIMIT_DEFAULT: str = "100/minute"
 
     # Celery
     CELERY_BROKER_URL: Optional[str] = None
