@@ -17,7 +17,13 @@ export function useLogin() {
       navigate('/dashboard')
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.detail || 'Erro ao fazer login'
+      const detail = error?.response?.data?.detail
+      let message = 'Erro ao fazer login'
+      if (typeof detail === 'string') {
+        message = detail
+      } else if (Array.isArray(detail)) {
+        message = detail.map((d: any) => d.msg || String(d)).join(', ')
+      }
       toast.error(message)
     },
   })
