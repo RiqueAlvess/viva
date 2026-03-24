@@ -6,7 +6,7 @@ import toast from 'react-hot-toast'
 import { Loader2, User } from 'lucide-react'
 
 export default function ProfilePage() {
-  const { user, setAuth, accessToken, refreshToken } = useAuthStore()
+  const { user, setAuth, accessToken } = useAuthStore()
   const [form, setForm] = useState({ nome: user?.nome || '', password: '', confirm: '' })
 
   const updateMutation = useMutation({
@@ -16,7 +16,7 @@ export default function ProfilePage() {
     },
     onSuccess: (updatedUser) => {
       if (accessToken) {
-        setAuth(updatedUser, accessToken, refreshToken || undefined)
+        setAuth(updatedUser, accessToken)
       }
       toast.success('Perfil atualizado')
       setForm((f) => ({ ...f, password: '', confirm: '' }))

@@ -5,12 +5,10 @@ import { User } from '@/types/auth.types'
 interface AuthStore {
   user: User | null
   accessToken: string | null
-  refreshToken: string | null
   isAuthenticated: boolean
   isLoading: boolean
-  setAuth: (user: User, token: string, refreshToken?: string) => void
+  setAuth: (user: User, token: string) => void
   clearAuth: () => void
-  updateToken: (token: string) => void
   setLoading: (loading: boolean) => void
 }
 
@@ -19,15 +17,13 @@ export const useAuthStore = create<AuthStore>()(
     (set) => ({
       user: null,
       accessToken: null,
-      refreshToken: null,
       isAuthenticated: false,
       isLoading: false,
 
-      setAuth: (user, token, refreshToken) =>
+      setAuth: (user, token) =>
         set({
           user,
           accessToken: token,
-          refreshToken: refreshToken || null,
           isAuthenticated: true,
           isLoading: false,
         }),
@@ -36,14 +32,8 @@ export const useAuthStore = create<AuthStore>()(
         set({
           user: null,
           accessToken: null,
-          refreshToken: null,
           isAuthenticated: false,
           isLoading: false,
-        }),
-
-      updateToken: (token) =>
-        set({
-          accessToken: token,
         }),
 
       setLoading: (loading) =>
@@ -57,7 +47,6 @@ export const useAuthStore = create<AuthStore>()(
       partialize: (state) => ({
         user: state.user,
         accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
     }

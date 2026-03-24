@@ -12,7 +12,7 @@ export function useLogin() {
   return useMutation({
     mutationFn: (data: LoginRequest) => authService.login(data),
     onSuccess: (response) => {
-      setAuth(response.user, response.access_token, response.refresh_token)
+      setAuth(response.user, response.access_token)
       toast.success(`Bem-vindo, ${response.user.nome}!`)
       navigate('/dashboard')
     },
@@ -30,15 +30,11 @@ export function useLogin() {
 }
 
 export function useLogout() {
-  const { clearAuth, refreshToken } = useAuthStore()
+  const { clearAuth } = useAuthStore()
   const navigate = useNavigate()
 
   return useMutation({
-    mutationFn: async () => {
-      if (refreshToken) {
-        await authService.logout(refreshToken)
-      }
-    },
+    mutationFn: async () => {},
     onSettled: () => {
       clearAuth()
       navigate('/login')
