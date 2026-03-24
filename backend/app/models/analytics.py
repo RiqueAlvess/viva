@@ -7,12 +7,11 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 
-from app.database import BaseAnalytics
+from app.database import Base
 
 
-class FactDimensionScore(BaseAnalytics):
+class FactDimensionScore(Base):
     __tablename__ = "fact_dimension_scores"
-    __table_args__ = {"schema": "analytics"}
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
@@ -38,9 +37,8 @@ class FactDimensionScore(BaseAnalytics):
     )
 
 
-class FactCampaignMetrics(BaseAnalytics):
+class FactCampaignMetrics(Base):
     __tablename__ = "fact_campaign_metrics"
-    __table_args__ = {"schema": "analytics"}
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
@@ -60,9 +58,8 @@ class FactCampaignMetrics(BaseAnalytics):
     )
 
 
-class FactSectorScore(BaseAnalytics):
+class FactSectorScore(Base):
     __tablename__ = "fact_sector_scores"
-    __table_args__ = {"schema": "analytics"}
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4

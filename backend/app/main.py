@@ -31,7 +31,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="VIVA Psicossocial API",
-    description="Multi-tenant SaaS psychosocial risk analysis platform (NR-1 compliance)",
+    description="Psychosocial risk analysis platform (NR-1 compliance)",
     version="1.0.0",
     lifespan=lifespan,
     docs_url="/docs" if settings.ENVIRONMENT != "production" else None,

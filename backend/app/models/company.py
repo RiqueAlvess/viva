@@ -4,12 +4,11 @@ from sqlalchemy import String, Boolean, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 
-from app.database import BaseCore
+from app.database import Base
 
 
-class Company(BaseCore):
+class Company(Base):
     __tablename__ = "companies"
-    __table_args__ = {"schema": "core"}
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4

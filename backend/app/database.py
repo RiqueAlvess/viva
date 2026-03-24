@@ -17,21 +17,11 @@ convention = {
     "pk": "pk_%(table_name)s",
 }
 
-metadata_core = MetaData(schema="core", naming_convention=convention)
-metadata_survey = MetaData(schema="survey", naming_convention=convention)
-metadata_analytics = MetaData(schema="analytics", naming_convention=convention)
+metadata = MetaData(naming_convention=convention)
 
 
-class BaseCore(DeclarativeBase):
-    metadata = metadata_core
-
-
-class BaseSurvey(DeclarativeBase):
-    metadata = metadata_survey
-
-
-class BaseAnalytics(DeclarativeBase):
-    metadata = metadata_analytics
+class Base(DeclarativeBase):
+    metadata = metadata
 
 
 _is_local = "localhost" in settings.DATABASE_URL or "127.0.0.1" in settings.DATABASE_URL
@@ -71,15 +61,5 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def init_db() -> None:
-    """Create schemas if they don't exist."""
-    async with engine.begin() as conn:
-        await conn.execute(
-            __import__("sqlalchemy").text("CREATE SCHEMA IF NOT EXISTS core")
-        )
-        await conn.execute(
-            __import__("sqlalchemy").text("CREATE SCHEMA IF NOT EXISTS survey")
-        )
-        await conn.execute(
-            __import__("sqlalchemy").text("CREATE SCHEMA IF NOT EXISTS analytics")
-        )
-    logger.info("Database schemas ensured.")
+    """Ensure database tables exist."""
+    logger.info("Database ready (public schema).")
