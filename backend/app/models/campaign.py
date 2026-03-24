@@ -7,25 +7,26 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 
-from app.database import BaseSurvey
+from app.database import Base
 
 
-class Campaign(BaseSurvey):
+class Campaign(Base):
     __tablename__ = "campaigns"
-    __table_args__ = {"schema": "survey"}
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     company_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("companies.id", ondelete="CASCADE"),
+        nullable=False,
     )
     nome: Mapped[str] = mapped_column(String(255), nullable=False)
     descricao: Mapped[str | None] = mapped_column(Text, nullable=True)
     data_inicio: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     data_fim: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     status: Mapped[str] = mapped_column(
-        SAEnum("draft", "active", "closed", name="campaign_status", schema="survey"),
+        SAEnum("draft", "active", "closed", name="campaign_status"),
         default="draft",
         nullable=False,
     )
@@ -44,6 +45,7 @@ class Campaign(BaseSurvey):
     )
 
     # Relationships
+    company: Mapped["Company"] = relationship("Company", back_populates="campaigns")
     units: Mapped[list["Unit"]] = relationship("Unit", back_populates="campaign")
     sectors: Mapped[list["Sector"]] = relationship("Sector", back_populates="campaign")
     positions: Mapped[list["Position"]] = relationship("Position", back_populates="campaign")
@@ -57,21 +59,16 @@ class Campaign(BaseSurvey):
         "SurveyResponse", back_populates="campaign"
     )
 
-    @property
-    def company(self):
-        return None  # Cross-schema, loaded separately
 
-
-class Unit(BaseSurvey):
+class Unit(Base):
     __tablename__ = "units"
-    __table_args__ = {"schema": "survey"}
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     campaign_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("survey.campaigns.id", ondelete="CASCADE"),
+        ForeignKey("campaigns.id", ondelete="CASCADE"),
         nullable=False,
     )
     nome: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -87,21 +84,20 @@ class Unit(BaseSurvey):
     )
 
 
-class Sector(BaseSurvey):
+class Sector(Base):
     __tablename__ = "sectors"
-    __table_args__ = {"schema": "survey"}
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     unit_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("survey.units.id", ondelete="CASCADE"),
+        ForeignKey("units.id", ondelete="CASCADE"),
         nullable=False,
     )
     campaign_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("survey.campaigns.id", ondelete="CASCADE"),
+        ForeignKey("campaigns.id", ondelete="CASCADE"),
         nullable=False,
     )
     nome: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -120,21 +116,20 @@ class Sector(BaseSurvey):
     )
 
 
-class Position(BaseSurvey):
+class Position(Base):
     __tablename__ = "positions"
-    __table_args__ = {"schema": "survey"}
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     sector_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("survey.sectors.id", ondelete="CASCADE"),
+        ForeignKey("sectors.id", ondelete="CASCADE"),
         nullable=False,
     )
     campaign_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("survey.campaigns.id", ondelete="CASCADE"),
+        ForeignKey("campaigns.id", ondelete="CASCADE"),
         nullable=False,
     )
     nome: Mapped[str] = mapped_column(String(255), nullable=False)

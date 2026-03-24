@@ -7,24 +7,23 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 
-from app.database import BaseSurvey
+from app.database import Base
 
 
-class Collaborator(BaseSurvey):
+class Collaborator(Base):
     __tablename__ = "collaborators"
-    __table_args__ = {"schema": "survey"}
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     campaign_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("survey.campaigns.id", ondelete="CASCADE"),
+        ForeignKey("campaigns.id", ondelete="CASCADE"),
         nullable=False,
     )
     position_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("survey.positions.id", ondelete="CASCADE"),
+        ForeignKey("positions.id", ondelete="CASCADE"),
         nullable=False,
     )
     email_hash: Mapped[str] = mapped_column(String(64), nullable=False)
@@ -44,21 +43,20 @@ class Collaborator(BaseSurvey):
     )
 
 
-class SurveyInvitation(BaseSurvey):
+class SurveyInvitation(Base):
     __tablename__ = "survey_invitations"
-    __table_args__ = {"schema": "survey"}
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     campaign_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("survey.campaigns.id", ondelete="CASCADE"),
+        ForeignKey("campaigns.id", ondelete="CASCADE"),
         nullable=False,
     )
     collaborator_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("survey.collaborators.id", ondelete="CASCADE"),
+        ForeignKey("collaborators.id", ondelete="CASCADE"),
         nullable=False,
     )
     # token_public is set to NULL after use
@@ -70,7 +68,6 @@ class SurveyInvitation(BaseSurvey):
         SAEnum(
             "pending", "sent", "used", "expired",
             name="invitation_status",
-            schema="survey",
         ),
         default="pending",
         nullable=False,
@@ -79,7 +76,6 @@ class SurveyInvitation(BaseSurvey):
         SAEnum(
             "pending", "sent", "responded", "expired",
             name="invitation_display_status",
-            schema="survey",
         ),
         default="pending",
         nullable=False,
@@ -112,17 +108,16 @@ class SurveyInvitation(BaseSurvey):
     )
 
 
-class InvitationEmail(BaseSurvey):
+class InvitationEmail(Base):
     """Separate encrypted email storage — never exposed via API."""
     __tablename__ = "invitation_emails"
-    __table_args__ = {"schema": "survey"}
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     invitation_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("survey.survey_invitations.id", ondelete="CASCADE"),
+        ForeignKey("survey_invitations.id", ondelete="CASCADE"),
         nullable=False,
         unique=True,
     )
@@ -138,16 +133,15 @@ class InvitationEmail(BaseSurvey):
     )
 
 
-class SurveyResponse(BaseSurvey):
+class SurveyResponse(Base):
     __tablename__ = "survey_responses"
-    __table_args__ = {"schema": "survey"}
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     campaign_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("survey.campaigns.id", ondelete="CASCADE"),
+        ForeignKey("campaigns.id", ondelete="CASCADE"),
         nullable=False,
     )
     session_uuid: Mapped[uuid.UUID] = mapped_column(
@@ -155,12 +149,12 @@ class SurveyResponse(BaseSurvey):
     )
     unit_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("survey.units.id", ondelete="SET NULL"),
+        ForeignKey("units.id", ondelete="SET NULL"),
         nullable=True,
     )
     sector_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("survey.sectors.id", ondelete="SET NULL"),
+        ForeignKey("sectors.id", ondelete="SET NULL"),
         nullable=True,
     )
     # Intentionally NO position_id / NO collaborator_id / NO invitation_id
@@ -169,19 +163,17 @@ class SurveyResponse(BaseSurvey):
         SAEnum(
             "18-24", "25-34", "35-44", "45-54", "55-64", "65+",
             name="faixa_etaria_enum",
-            schema="survey",
         ),
         nullable=True,
     )
     genero: Mapped[str | None] = mapped_column(
-        SAEnum("M", "F", "O", "N", name="genero_enum", schema="survey"),
+        SAEnum("M", "F", "O", "N", name="genero_enum"),
         nullable=True,
     )
     tempo_empresa: Mapped[str | None] = mapped_column(
         SAEnum(
             "<1", "1-3", "3-5", "5-10", ">10",
             name="tempo_empresa_enum",
-            schema="survey",
         ),
         nullable=True,
     )

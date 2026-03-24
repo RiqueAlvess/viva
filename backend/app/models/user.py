@@ -4,26 +4,25 @@ from sqlalchemy import String, Boolean, DateTime, ForeignKey, func, Enum as SAEn
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 
-from app.database import BaseCore
+from app.database import Base
 
 
-class User(BaseCore):
+class User(Base):
     __tablename__ = "users"
-    __table_args__ = {"schema": "core"}
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     company_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("core.companies.id", ondelete="RESTRICT"),
+        ForeignKey("companies.id", ondelete="RESTRICT"),
         nullable=False,
     )
     nome: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[str] = mapped_column(
-        SAEnum("ADM", "RH", "LIDERANCA", name="user_role", schema="core"),
+        SAEnum("ADM", "RH", "LIDERANCA", name="user_role"),
         nullable=False,
     )
     ativo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
@@ -47,16 +46,15 @@ class User(BaseCore):
     )
 
 
-class RefreshToken(BaseCore):
+class RefreshToken(Base):
     __tablename__ = "refresh_tokens"
-    __table_args__ = {"schema": "core"}
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("core.users.id", ondelete="CASCADE"),
+        ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
     )
     token_hash: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)

@@ -12,7 +12,7 @@ from alembic import context
 load_dotenv()
 
 # Load models
-from app.database import BaseCore, BaseSurvey, BaseAnalytics
+from app.database import Base
 import app.models.company  # noqa
 import app.models.user  # noqa
 import app.models.campaign  # noqa
@@ -24,12 +24,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Use all metadata objects
-target_metadata = [
-    BaseCore.metadata,
-    BaseSurvey.metadata,
-    BaseAnalytics.metadata,
-]
+target_metadata = Base.metadata
 
 # Override with env var if present
 db_url = os.environ.get("DATABASE_URL", config.get_main_option("sqlalchemy.url"))
@@ -46,7 +41,6 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        include_schemas=True,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -56,7 +50,6 @@ def do_run_migrations(connection: Connection) -> None:
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
-        include_schemas=True,
         compare_type=True,
     )
     with context.begin_transaction():
